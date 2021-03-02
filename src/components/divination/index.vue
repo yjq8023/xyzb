@@ -32,29 +32,31 @@
     </div>
     <div class="d-content">
       <div class="box" :style="{left: moveCard ? '5%' : 0 }">
-        <div class="item" @click="betting(index)" :class="{animation: opening, opened: opened }" :style="{top: isNeedMove(item) ? itemHeight + 'px' : 0, left: isNeedMove(item) ? '-12%' : 0 }" :ref="index" v-for="(item, index) of iconData" :key="index">
+        <div class="item" @click="betting(index)" :class="{animation: opening, opened: opened, coined: myCoinData[index] }" :style="{top: isNeedMove(item) ? itemHeight + 'px' : 0, left: isNeedMove(item) ? '-12%' : 0 }" :ref="index" v-for="(item, index) of iconData" :key="index">
           <div class="num" :class="{show: !opening && coinData['x'+item.multiple]}">共{{coinData['x'+item.multiple]}}</div>
           <div class="zm" :class="{opening: opening}">
             <img src="./assets/bg-card_fa5cd69e.png" style="width: 100%" alt="">
             <img :src="item.icon" class="icon" :class="{tk: item.multiple === 60}" alt="">
             <div class="text">{{item.multiple}}倍</div>
-            <div class="label">{{item.label}}</div>
+            <div class="label">{{myCoinData[index] ? '已投' + myCoinData[index] : item.label }}</div>
           </div>
           <div class="bm" :class="{opening: opening}">
-            <img src="./assets/card-back_937dd978.png" style="width: 93%" alt="">
+            <img v-if="!myCoinData[index]" src="./assets/card-back_937dd978.png" style="width: 93%" alt="">
+            <img v-else src="./assets/bg-card-b.jpg" style="width: 93%" alt="">
           </div>
         </div>
         <span v-if="!opened" class="cursor-icon" ref="cursor-icon"></span>
       </div>
-      <div v-if="opened && result" class="result">
+      <div v-if="opened && result" class="result" :class="{coined: myCoinData[result]}">
         <div class="zm">
           <img src="./assets/bg-card_fa5cd69e.png" style="width: 100%" alt="">
           <img :src="iconData[result].icon" class="icon" :class="{tk: iconData[result].multiple === 60}" alt="">
           <div class="text">{{iconData[result].multiple}}倍</div>
-          <div class="label">{{iconData[result].label}}</div>
+          <div class="label">{{myCoinData[result] ? '已投' + myCoinData[result] : iconData[result].label}}</div>
         </div>
         <div class="bm">
-          <img src="./assets/card-back_937dd978.png" style="width: 93%" alt="">
+          <img v-if="!myCoinData[result]" src="./assets/card-back_937dd978.png" style="width: 93%" alt="">
+          <img v-else src="./assets/bg-card-b.jpg" style="width: 93%" alt="">
         </div>
       </div>
     </div>
@@ -114,16 +116,25 @@
     },
   }
   const addCoinData = [10, 50, 100, 500]
+  const cursorData = ['x2', 'x20', 'x3', 'x40', 'x5', 'x60', 'x10', 'x80'] // 最底部卡牌对应的倍数
   export default {
     name: "divination",
     props: {
       title: String, // 标题
+      // 所有人下注金额数据
       coinData: {
         type: Object,
         default: () => {
           return {}
         }
-      }, // 下注金额数据
+      },
+      // 我下注金额数据
+      myCoinData: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      },
       logListData: Array, // 开奖记录列表
       myCoinNum: {
         default: 0
@@ -138,7 +149,7 @@
         opening: false,
         opened: false,
         itemHeight: 123,
-        cursor: '',
+        cursor: 'x2',
         moveCard: false,
         moveCarded: false,
         result: '', // 开奖结果，枚举值 x2，x5....
@@ -182,11 +193,17 @@
         }, 2000)
       },
       end(result) {
+        console.log('result');
+        console.log(result);
         this.result = result
         clearInterval(this.interval)
         setTimeout(() => {
-          this.setOpenedCard()
-        }, 800)
+          this.moveCardTop(cursorData.indexOf(result), 800, 50, () => {
+            setTimeout(() => {
+              this.setOpenedCard()
+            }, 200)
+          })
+        }, 500)
       },
       betting(type) {
         if (!this.beforeOpen) {
@@ -228,7 +245,7 @@
           this.moveCardTop(index, 800, 40)
         }, 800)
       },
-      moveCardTop(index, time, top) {
+      moveCardTop(index, time, top, callback) {
         if (this.opened) {
           return
         }
@@ -242,12 +259,15 @@
         this.$refs[i][0].style = `position: relative;top:${topnow - top}px;left:${left}%;`
         setTimeout(() => {
           this.$refs[i][0].style = `${position}top:${topnow}px;left:${left}%;`
+          callback && callback()
         }, time)
       },
       setCursorIconPosition(index) {
         this.$refs['cursor-icon'].style = `left:${index * 12}%`
       },
       setOpenedCard() {
+        console.log('this.cursor');
+        console.log(this.cursor);
         const needMove = this.isNeedMove(this.iconData[this.cursor])
         const top = needMove ? 0 : -1 * this.itemHeight
         const left = needMove ? '-12' : '0'
@@ -609,6 +629,12 @@
     position: absolute;
     right: 6px;
     top: 12px;
+  }
+  .coined .zm img:first-child{
+    border: 1px springgreen solid;
+  }
+  .coined .bm img:first-child{
+
   }
   /*.d-content .box .animation.item:nth-child(-n + 4){*/
   /*}*/

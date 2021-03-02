@@ -12,6 +12,7 @@
       :title="title"
       :logListData="logListData"
       :coinData="coinData"
+      :myCoinData="myCoinData"
       :myCoinNum="998"
       @betting="betting"
     />
@@ -31,6 +32,7 @@ export default {
       logListData: [],
       title: '即将开始',
       coinData: {},
+      myCoinData: {},
       reset: false,
       divinationKey: Date.now(),
       interval: null,
@@ -47,6 +49,7 @@ export default {
       this.divinationKey = Date.now()
       this.title = '即将开始'
       this.coinData = {}
+      this.myCoinData = {}
     },
     // 开始下注
     start() {
@@ -73,13 +76,14 @@ export default {
     end() {
       this.step = 3
       this.title = '即将开始下一轮'
-      this.$refs.divination.end('x2')
+      this.$refs.divination.end('x40')
     },
     // 下注
     // data: {type: '下注类型（x倍）'， num: 下注金额}
     betting(data) {
       // 这里应该是实时获取所有人的下注金额，这里只是为了演示效果
       this.$set(this.coinData, data.type, this.coinData[data.type] ? this.coinData[data.type] + data.num : data.num)
+      this.myCoinData = this.coinData
     },
     // 获取开奖记录信息
     getLogListData() {
